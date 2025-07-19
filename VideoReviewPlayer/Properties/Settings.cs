@@ -78,6 +78,21 @@ namespace VideoReviewPlayer.Properties
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int ImageFormat
+        {
+            get
+            {
+                return ((int)(this["ImageFormat"]));
+            }
+            set
+            {
+                this["ImageFormat"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("-1")]
         public double WindowLeft
         {

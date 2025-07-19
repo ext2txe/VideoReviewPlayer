@@ -156,6 +156,109 @@
 
                 <Separator Width="1" Background="Gray" Margin="10,5"/>
 
+                <TextBlock Text="Screenshot:" Foreground="LightGray" VerticalAlignment="Center" 
+                          Margin="5,0" FontSize="11"/>
+
+                <ComboBox x:Name="CmbImageFormat" SelectedIndex="0" Width="50" 
+                         Background="#FF3C3C3C" Foreground="White" BorderBrush="#FF5C5C5C"
+                         SelectionChanged="CmbImageFormat_SelectionChanged"
+                         ToolTip="Screenshot image format">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="Background" Value="#FF3C3C3C"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="BorderBrush" Value="#FF5C5C5C"/>
+                            <Setter Property="Padding" Value="5,2"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter Property="Background" Value="#FF0078D4"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#FF0078D4"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                    <ComboBox.Template>
+                        <ControlTemplate TargetType="ComboBox">
+                            <Grid>
+                                <ToggleButton x:Name="ToggleButton" 
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            Foreground="{TemplateBinding Foreground}"
+                                            IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                            ClickMode="Press">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="{TemplateBinding Background}" 
+                                                  BorderBrush="{TemplateBinding BorderBrush}" 
+                                                  BorderThickness="1">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition/>
+                                                        <ColumnDefinition Width="15"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <ContentPresenter Grid.Column="0" 
+                                                                    HorizontalAlignment="Left" 
+                                                                    VerticalAlignment="Center" 
+                                                                    Margin="3,3,18,3"/>
+                                                    <Path Grid.Column="1" 
+                                                        HorizontalAlignment="Center" 
+                                                        VerticalAlignment="Center" 
+                                                        Data="M 0 0 L 3 3 L 6 0 Z" 
+                                                        Fill="White"/>
+                                                </Grid>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter x:Name="ContentSite" 
+                                                Content="{TemplateBinding SelectionBoxItem}"
+                                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                HorizontalAlignment="Left" 
+                                                VerticalAlignment="Center" 
+                                                Margin="3,3,18,3"
+                                                IsHitTestVisible="False"/>
+                                <TextBox x:Name="PART_EditableTextBox" 
+                                       Visibility="Hidden" 
+                                       IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                                <Popup x:Name="Popup" 
+                                     Placement="Bottom" 
+                                     IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                     AllowsTransparency="True" 
+                                     Focusable="False" 
+                                     PopupAnimation="Slide">
+                                    <Grid x:Name="DropDown" 
+                                        SnapsToDevicePixels="True" 
+                                        MinWidth="{TemplateBinding ActualWidth}" 
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <Border x:Name="DropDownBorder" 
+                                              Background="#FF3C3C3C" 
+                                              BorderBrush="#FF5C5C5C" 
+                                              BorderThickness="1"/>
+                                        <ScrollViewer SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Popup>
+                            </Grid>
+                        </ControlTemplate>
+                    </ComboBox.Template>
+                    <ComboBoxItem Content="JPG" Foreground="White"/>
+                    <ComboBoxItem Content="PNG" Foreground="White"/>
+                    <ComboBoxItem Content="BMP" Foreground="White"/>
+                </ComboBox>
+
+                <Button x:Name="BtnScreenshot" Content="📷" Click="BtnScreenshot_Click" 
+                       Style="{StaticResource TimelineButtonStyle}" FontSize="14"
+                       ToolTip="Save current frame as screenshot"/>
+
+                <Separator Width="1" Background="Gray" Margin="10,5"/>
+
                 <TextBlock Text="Speed:" Foreground="LightGray" VerticalAlignment="Center" 
                           Margin="5,0" FontSize="11"/>
 
@@ -256,6 +359,7 @@
                     <ComboBoxItem Content="2x" Foreground="White"/>
                     <ComboBoxItem Content="4x" Foreground="White"/>
                     <ComboBoxItem Content="8x" Foreground="White"/>
+                    <ComboBoxItem Content="16x" Foreground="White"/>
                 </ComboBox>
 
                 <Separator Width="1" Background="Gray" Margin="10,5"/>

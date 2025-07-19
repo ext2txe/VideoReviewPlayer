@@ -6,6 +6,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Collections.Generic;
+using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using WinForms = System.Windows.Forms;
 
 namespace VideoReviewPlayer
@@ -17,6 +19,7 @@ namespace VideoReviewPlayer
         private string currentVideoPath = "";
         private string currentFolderPath = "";
         private string keepFolderPath = "";
+        private const string AppVersion = "0.1.48";
 
         public MainWindow()
         {
@@ -24,6 +27,7 @@ namespace VideoReviewPlayer
             InitializeTimer();
             LoadSettings();
             UpdateControlStates(false);
+            this.Title = $"Video Review Player v{AppVersion}";
         }
 
         private void LoadSettings()
@@ -68,6 +72,10 @@ namespace VideoReviewPlayer
 
                 // Load success message preference
                 ChkShowSuccessMessages.IsChecked = Properties.Settings.Default.ShowSuccessMessages;
+
+                // Load image format preference
+                if (CmbImageFormat != null)
+                    CmbImageFormat.SelectedIndex = Properties.Settings.Default.ImageFormat;
             }
             catch (Exception ex)
             {
@@ -81,6 +89,10 @@ namespace VideoReviewPlayer
         {
             try
             {
+                // Don't save settings if UI isn't fully loaded
+                if (!this.IsLoaded)
+                    return;
+
                 // Save window position and size
                 if (this.WindowState == WindowState.Normal)
                 {
@@ -95,18 +107,25 @@ namespace VideoReviewPlayer
                     Properties.Settings.Default.WindowMaximized = this.WindowState == WindowState.Maximized;
                 }
 
-                // Save left panel width
-                Properties.Settings.Default.LeftPanelWidth = LeftColumn.Width.Value;
+                // Save left panel width (with null check)
+                if (LeftColumn != null)
+                    Properties.Settings.Default.LeftPanelWidth = LeftColumn.Width.Value;
 
                 // Save folder paths
                 Properties.Settings.Default.FolderPath = currentFolderPath ?? "";
                 Properties.Settings.Default.KeepFolderPath = keepFolderPath ?? "";
 
-                // Save playback speed
-                Properties.Settings.Default.PlaybackSpeed = CmbPlaybackSpeed.SelectedIndex;
+                // Save playback speed (with null check)
+                if (CmbPlaybackSpeed != null)
+                    Properties.Settings.Default.PlaybackSpeed = CmbPlaybackSpeed.SelectedIndex;
 
-                // Save success message preference
-                Properties.Settings.Default.ShowSuccessMessages = ChkShowSuccessMessages.IsChecked ?? true;
+                // Save success message preference (with null check)
+                if (ChkShowSuccessMessages != null)
+                    Properties.Settings.Default.ShowSuccessMessages = ChkShowSuccessMessages.IsChecked ?? true;
+
+                // Save image format preference (with null check)
+                if (CmbImageFormat != null)
+                    Properties.Settings.Default.ImageFormat = CmbImageFormat.SelectedIndex;
 
                 Properties.Settings.Default.Save();
             }
@@ -270,7 +289,7 @@ namespace VideoReviewPlayer
 
                 currentVideoPath = filePath;
                 VideoPlayer.Source = new Uri(currentVideoPath);
-                this.Title = $"Video Review Player - {Path.GetFileName(currentVideoPath)}";
+                this.Title = $"Video Review Player v{AppVersion} - {Path.GetFileName(currentVideoPath)}";
 
                 // Reset UI
                 BtnPlay.Content = "Play";
@@ -316,7 +335,7 @@ namespace VideoReviewPlayer
 
                     currentVideoPath = openFileDialog.FileName;
                     VideoPlayer.Source = new Uri(currentVideoPath);
-                    this.Title = $"Video Review Player - {Path.GetFileName(currentVideoPath)}";
+                    this.Title = $"Video Review Player v{AppVersion} - {Path.GetFileName(currentVideoPath)}";
 
                     // Reset UI
                     BtnPlay.Content = "Play";
@@ -346,7 +365,7 @@ namespace VideoReviewPlayer
             // Apply the selected speed ratio
             if (CmbPlaybackSpeed.SelectedIndex >= 0)
             {
-                var speeds = new double[] { 1.0, 1.5, 2.0, 4.0, 8.0 };
+                var speeds = new double[] { 1.0, 1.5, 2.0, 4.0, 8.0, 16.0 };
                 VideoPlayer.SpeedRatio = speeds[CmbPlaybackSpeed.SelectedIndex];
             }
         }
@@ -410,7 +429,7 @@ namespace VideoReviewPlayer
         {
             if (VideoPlayer.Source != null && CmbPlaybackSpeed.SelectedIndex >= 0)
             {
-                var speeds = new double[] { 1.0, 1.5, 2.0, 4.0, 8.0 };
+                var speeds = new double[] { 1.0, 1.5, 2.0, 4.0, 8.0, 16.0 };
                 var selectedSpeed = speeds[CmbPlaybackSpeed.SelectedIndex];
 
                 try
@@ -426,7 +445,8 @@ namespace VideoReviewPlayer
                             BtnPlay.Content = $"Playing {selectedSpeed}x";
                     }
 
-                    SaveSettings(); // Save speed preference immediately
+                    if (this.IsLoaded)
+                        SaveSettings(); // Save speed preference immediately
                 }
                 catch (Exception ex)
                 {
@@ -436,6 +456,104 @@ namespace VideoReviewPlayer
                     CmbPlaybackSpeed.SelectedIndex = 0;
                     VideoPlayer.SpeedRatio = 1.0;
                 }
+            }
+        }
+
+        private void CmbImageFormat_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            // Only save if the window is fully loaded to avoid startup issues
+            if (this.IsLoaded)
+                SaveSettings(); // Save image format preference immediately
+        }
+
+        private void BtnScreenshot_Click(object sender, RoutedEventArgs e)
+        {
+            if (VideoPlayer.Source == null)
+            {
+                System.Windows.MessageBox.Show("No video loaded to capture.", "Screenshot Error",
+                              MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                // Create a render target bitmap from the video player
+                var renderTargetBitmap = new RenderTargetBitmap(
+                    (int)VideoPlayer.ActualWidth,
+                    (int)VideoPlayer.ActualHeight,
+                    96, 96, PixelFormats.Pbgra32);
+
+                renderTargetBitmap.Render(VideoPlayer);
+
+                // Determine file extension based on selected format
+                var formats = new[] { "jpg", "png", "bmp" };
+                var selectedFormat = formats[CmbImageFormat.SelectedIndex];
+
+                // Generate filename with timestamp
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var videoName = Path.GetFileNameWithoutExtension(currentVideoPath);
+                var fileName = $"{videoName}_frame_{timestamp}.{selectedFormat}";
+
+                // Determine save location
+                string savePath;
+                if (!string.IsNullOrEmpty(keepFolderPath) && Directory.Exists(keepFolderPath))
+                {
+                    savePath = Path.Combine(keepFolderPath, fileName);
+                }
+                else
+                {
+                    // Save to same folder as video if no keep folder specified
+                    var videoFolder = Path.GetDirectoryName(currentVideoPath);
+                    savePath = Path.Combine(videoFolder, fileName);
+                }
+
+                // Handle duplicate filenames
+                var counter = 1;
+                var originalPath = savePath;
+                while (File.Exists(savePath))
+                {
+                    var nameWithoutExt = Path.GetFileNameWithoutExtension(originalPath);
+                    var directory = Path.GetDirectoryName(originalPath);
+                    var extension = Path.GetExtension(originalPath);
+                    savePath = Path.Combine(directory, $"{nameWithoutExt}_{counter}{extension}");
+                    counter++;
+                }
+
+                // Save the image based on format
+                BitmapEncoder encoder;
+                switch (selectedFormat.ToLower())
+                {
+                    case "png":
+                        encoder = new PngBitmapEncoder();
+                        break;
+                    case "bmp":
+                        encoder = new BmpBitmapEncoder();
+                        break;
+                    case "jpg":
+                    default:
+                        var jpegEncoder = new JpegBitmapEncoder();
+                        jpegEncoder.QualityLevel = 95; // High quality JPEG
+                        encoder = jpegEncoder;
+                        break;
+                }
+
+                encoder.Frames.Add(BitmapFrame.Create(renderTargetBitmap));
+
+                using (var fileStream = new FileStream(savePath, FileMode.Create))
+                {
+                    encoder.Save(fileStream);
+                }
+
+                if (ChkShowSuccessMessages.IsChecked == true)
+                {
+                    System.Windows.MessageBox.Show($"Screenshot saved:\n{savePath}", "Screenshot Saved",
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error saving screenshot: {ex.Message}", "Screenshot Error",
+                              MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -570,7 +688,7 @@ namespace VideoReviewPlayer
                             }
                         }
 
-                        this.Title = "Video Review Player";
+                        this.Title = $"Video Review Player v{AppVersion}";
                         UpdateControlStates(false);
                         currentVideoPath = "";
 
@@ -618,7 +736,7 @@ namespace VideoReviewPlayer
                             TxtFileCount.Text = $"{LstVideoFiles.Items.Count} video file(s) found";
                         }
 
-                        this.Title = "Video Review Player";
+                        this.Title = $"Video Review Player v{AppVersion}";
                         UpdateControlStates(false);
                         currentVideoPath = "";
 
@@ -656,6 +774,7 @@ namespace VideoReviewPlayer
             BtnStop.IsEnabled = hasVideo;
             BtnKeep.IsEnabled = hasVideo;
             BtnDelete.IsEnabled = hasVideo;
+            BtnScreenshot.IsEnabled = hasVideo;
             CmbPlaybackSpeed.IsEnabled = hasVideo;
 
             // Quick jump buttons
