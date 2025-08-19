@@ -19,7 +19,7 @@ namespace VideoReviewPlayer
         private string currentVideoPath = "";
         private string currentFolderPath = "";
         private string keepFolderPath = "";
-        private const string AppVersion = "0.1.48";
+        private const string AppVersion = "0.1.49";
 
         public MainWindow()
         {
@@ -704,15 +704,28 @@ namespace VideoReviewPlayer
             }
         }
 
+        private bool _askUserIfSureAboutDeletion = true;
+
         private void BtnDelete_Click(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(currentVideoPath))
             {
-                var result = System.Windows.MessageBox.Show(
-                    $"Are you sure you want to DELETE '{Path.GetFileName(currentVideoPath)}'?\n\nThis action cannot be undone!",
-                    "Delete Video",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                MessageBoxResult result = MessageBoxResult.Yes;
+                if (_askUserIfSureAboutDeletion)
+                {
+                    if (ChkShowSuccessMessages.IsChecked == true)
+                    {
+                        result = System.Windows.MessageBox.Show(
+                            $"Are you sure you want to DELETE '{Path.GetFileName(currentVideoPath)}'?\n\nThis action cannot be undone!",
+                            "Delete Video",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning);
+                    }
+                    else
+                    {
+                        result = MessageBoxResult.No;
+                    }
+                }
 
                 if (result == MessageBoxResult.Yes)
                 {
@@ -886,6 +899,11 @@ namespace VideoReviewPlayer
             {
                 return DisplayName;
             }
+        }
+
+        private void OnShowAreYouSureMessage_Clik(object sender, RoutedEventArgs e)
+        {
+            _askUserIfSureAboutDeletion = (bool) ChkShowAreYouSureMessages.IsChecked;
         }
     }
 }

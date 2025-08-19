@@ -1,8 +1,8 @@
 <Window x:Class="VideoReviewPlayer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Video Review Player" Height="600" Width="900"
-        WindowStartupLocation="CenterScreen">
+        Title="Video Review Player" Height="900" Width="1700"
+        WindowStartupLocation="CenterScreen" Icon="/H2N2_Icon2.jpg">
     <Window.Resources>
         <Style x:Key="TimelineButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#FF3C3C3C"/>
@@ -385,6 +385,14 @@
 
                 <Button x:Name="BtnDelete" Content="✗ Delete" Click="BtnDelete_Click" 
                        Background="#FFC62828" Style="{StaticResource TimelineButtonStyle}"/>
+
+                <Separator Width="1" Background="Gray" Margin="10,5"/>
+
+                <CheckBox x:Name="ChkShowAreYouSureMessages" Content="Show 'Are you sure' prompt" 
+                         Foreground="LightGray" VerticalAlignment="Center" Margin="10,0" 
+                         IsChecked="True" FontSize="11" Click="OnShowAreYouSureMessage_Clik"/>
+
+
             </StackPanel>
 
             <!-- Timeline Area -->
